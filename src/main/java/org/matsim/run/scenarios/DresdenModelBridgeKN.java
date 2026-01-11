@@ -33,9 +33,9 @@ public final class DresdenModelBridgeKN extends DresdenModel {
 		} else{
 			args = new String[]{
 				"--10pct",
-				"--iterations", "0",
+				"--iterations", "10",
 //				"--output", "./output/bridge_more4/",
-				"--runId", "bridge_more4",
+				"--runId", "bridge_more4_kn_10it",
 				"--config:controller.overwriteFiles", OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists.name(),
 				"--config:global.numberOfThreads", "2",
 				"--config:qsim.numberOfThreads", "2",
