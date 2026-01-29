@@ -11,6 +11,7 @@ import org.matsim.analysis.personMoney.PersonMoneyEventsAnalysisModule;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Link;
+import org.matsim.api.core.v01.network.Network;
 import org.matsim.application.MATSimApplication;
 import org.matsim.application.analysis.CheckPopulation;
 import org.matsim.application.analysis.traffic.LinkStats;
@@ -42,6 +43,7 @@ import org.matsim.core.replanning.annealing.ReplanningAnnealerConfigGroup;
 import org.matsim.core.replanning.strategies.DefaultPlanStrategiesModule;
 import org.matsim.core.scoring.functions.ScoringParametersForPerson;
 import org.matsim.dashboards.DresdenDashboardProvider;
+import org.matsim.facilities.ActivityFacilities;
 import org.matsim.prepare.*;
 import org.matsim.simwrapper.DashboardProvider;
 import org.matsim.simwrapper.SimWrapperConfigGroup;
@@ -72,6 +74,9 @@ import static org.matsim.utils.DresdenUtils.*;
 public class DresdenModel extends MATSimApplication {
 
 	public static final String VERSION = "v1.0";
+
+//	protected Network network;
+//	protected ActivityFacilities facilities;
 
 	@CommandLine.Mixin
 	private final SampleOptions sample = new SampleOptions(100, 25, 10, 1);
@@ -279,7 +284,6 @@ public class DresdenModel extends MATSimApplication {
 //				This is way more convenient imho.
 					Multibinder.newSetBinder( binder(), DashboardProvider.class ).addBinding().to( DresdenDashboardProvider.class );
 				}
-			}
 		});
 	}
 
