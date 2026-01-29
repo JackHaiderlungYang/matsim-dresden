@@ -37,6 +37,7 @@ import org.matsim.core.config.groups.ScoringConfigGroup;
 import org.matsim.core.config.groups.VspExperimentalConfigGroup;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
+import org.matsim.core.controler.OutputDirectoryLogging;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.network.turnRestrictions.DisallowedNextLinks;
 import org.matsim.core.replanning.annealing.ReplanningAnnealerConfigGroup;
@@ -105,6 +106,8 @@ public class DresdenModel extends MATSimApplication {
 	@Nullable
 	@Override
 	protected Config prepareConfig(Config config) {
+		OutputDirectoryLogging.catchLogEntries();
+		// yy this would be even better in MATSimApplication
 
 		// Add all activity types with time bins
 		SnzActivities.addScoringParams(config);
