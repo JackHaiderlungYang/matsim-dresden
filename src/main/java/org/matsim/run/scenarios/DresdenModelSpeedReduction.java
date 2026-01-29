@@ -44,8 +44,9 @@ public final class DresdenModelSpeedReduction extends DresdenModel {
 			// use the given args
 		} else{
 			args = new String[]{
+				"--config", "./input/v1.0/dresden-v1.0-1pct.config.xml",
 				"--1pct",
-				"--iterations", "10",
+				"--iterations", "0",
 				"--output", "./output/speed-reduction/",
 				"--config:controller.overwriteFiles=deleteDirectoryIfExists",// Refresh the output
 				"--config:global.numberOfThreads", "2",

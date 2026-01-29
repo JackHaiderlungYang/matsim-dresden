@@ -121,6 +121,12 @@ public class DresdenModel extends MATSimApplication {
 //		the tarifzone shp file basically is a dresden shp file with fare prices as additional information
 		simWrapper.defaultParams().setShp(String.format("vvo_tarifzone_10_dresden/%s_vvo_tarifzone_10_dresden_utm32n.shp", VERSION));
 
+		// ASCs are different for different sample sizes in the config.  For that reason, the pgm flow below does not make sense.  We want to try the following instead:
+		// * the default setup is for 10pct.  So if you do not write anything, or you write --10pct, it will just run through.
+		// * if, however, you write any other sample size, and you do NOT provide a config, then it will abort.
+		// * if you provide a config, and a sample size, it will check for consistency, and abort if not consistent.  --config .... --1pct
+		// * If you provide a config, but not a sample size, it will not check.  It may check in the VspConsistencyChecker.  (Not clear yet.)
+
 		if (sample.isSet()){
 			if ( sample.getSample()== 0.01 ) {
 //				config.plans().setInputFile( sample.adjustName( config.plans().getInputFile() ) );
