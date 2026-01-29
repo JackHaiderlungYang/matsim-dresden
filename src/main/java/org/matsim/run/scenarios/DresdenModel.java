@@ -275,16 +275,17 @@ public class DresdenModel extends MATSimApplication {
 			@Override
 			public void install() {
 				install(new PtFareModule());
-				bind(ScoringParametersForPerson.class).to(IncomeDependentUtilityOfMoneyPersonScoringParameters.class).in( Singleton.class );
+				bind(ScoringParametersForPerson.class).to(IncomeDependentUtilityOfMoneyPersonScoringParameters.class).in(Singleton.class);
 
 				addTravelTimeBinding(TransportMode.ride).to(carTravelTime());
 				addTravelDisutilityFactoryBinding(TransportMode.ride).to(carTravelDisutilityFactoryKey());
 
-				if ( generateDashboards ){
+				if (generateDashboards) {
 //				this binds the DresdenDashboardProvider with guice instead of resources/services/.../file.
 //				This is way more convenient imho.
-					Multibinder.newSetBinder( binder(), DashboardProvider.class ).addBinding().to( DresdenDashboardProvider.class );
+					Multibinder.newSetBinder(binder(), DashboardProvider.class).addBinding().to(DresdenDashboardProvider.class);
 				}
+			}
 		});
 	}
 
