@@ -121,10 +121,21 @@ public final class DresdenSimWrapperRunner implements MATSimAppCommand {
 			}
 
 //			we need to define the following paths outside of the following if clause because we need to use them later on.
-			String networkPath = ApplicationUtils.matchInput("*output_network.xml*", runDirectory).toString();
-			String vehiclesPath = ApplicationUtils.matchInput("*output_vehicles.xml*", runDirectory).toString();
-			String transitVehiclesPath = ApplicationUtils.matchInput("*output_transitVehicles.xml*", runDirectory).toString();
-			String populationPath = ApplicationUtils.matchInput("*output_plans.xml*", runDirectory).toString();
+			String networkPath = runDirectory
+				.resolve("dresden-v1.1-1pct.output_network.xml.zst")
+				.toString();
+
+			String vehiclesPath = runDirectory
+				.resolve("dresden-v1.1-1pct.output_vehicles.xml.zst")
+				.toString();
+
+			String transitVehiclesPath = runDirectory
+				.resolve("dresden-v1.1-1pct.output_transitVehicles.xml.zst")
+				.toString();
+
+			String populationPath = runDirectory
+				.resolve("dresden-v1.1-1pct.output_plans.xml.zst")
+				.toString();
 			Path beforeEmissionsConfigPath = getUniqueTargetPath(Path.of(configPath.split(XML)[0] + BEFORE));
 			Path beforeEmissionsNetworkPath = getUniqueTargetPath(Path.of(networkPath.split(XML)[0] + BEFORE + ".gz"));
 			Path beforeEmissionsVehiclesPath = getUniqueTargetPath(Path.of(vehiclesPath.split(XML)[0] + BEFORE + ".gz"));
