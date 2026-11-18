@@ -120,7 +120,8 @@ public final class DresdenSimWrapperRunner implements MATSimAppCommand {
 					.setAnalysisArgs("--person-filter", "subpopulation=person")).context("calibration").title("Trips (calibration)"));
 			}
 
-//			we need to define the following paths outside of the following if clause because we need to use them later on.
+			// Select the Dresden v1.1 1% Zstandard outputs explicitly; their paths are also
+			// used to derive the backup filenames before emissions processing.
 			String networkPath = runDirectory
 				.resolve("dresden-v1.1-1pct.output_network.xml.zst")
 				.toString();

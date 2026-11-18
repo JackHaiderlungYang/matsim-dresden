@@ -10,26 +10,21 @@ import org.matsim.application.MATSimApplication;
 import org.matsim.core.utils.geometry.CoordinateTransformation;
 import org.matsim.core.utils.geometry.transformations.TransformationFactory;
 
+/**
+ * Applies the same link selection as the regular speed scenario with a 0.1 free-flow
+ * speed multiplier, yielding approximately 3.5 km/h on the selected links.
+ */
 public final class DresdenModelSpeedLimitExtreme extends DresdenModel {
 
 	private static final Logger log =
 		LogManager.getLogger(DresdenModelSpeedLimitExtreme.class);
 
 	/*
-	 * Policy definition:
-	 * Existing posted speed limit: 50 km/h
-	 * Technical extreme-case equivalent: 5 km/h
-	 *
-	 * The MATSim network represents a posted speed of 50 km/h
-	 * with a freespeed of approximately 35 km/h.
-	 * Therefore, the original MATSim freespeed is multiplied by:
-	 *
-	 * 30 / 50 = 0.6
+	 * Scale selected links from approximately 35 to 3.5 km/h free-flow speed.
+	 * The baseline free-flow speed is characteristic of posted 50 km/h roads
+	 * in the Dresden network. The scenario updates link freespeed only.
 	 */
-	private static final double BASE_POSTED_SPEED_KMH = 50.0;
-	private static final double POLICY_POSTED_SPEED_KMH = 5.0;
-	private static final double SPEED_REDUCTION_FACTOR =
-		POLICY_POSTED_SPEED_KMH / BASE_POSTED_SPEED_KMH;
+	private static final double SPEED_REDUCTION_FACTOR = 0.1;
 
 	/*
 	 * Technical extreme-case area in central Dresden.
@@ -126,20 +121,17 @@ public final class DresdenModelSpeedLimitExtreme extends DresdenModel {
 			double originalSpeedKmh = originalSpeed * 3.6;
 
 			/*
-			 * Select only links representing roads with an original
-			 * posted speed limit of approximately 50 km/h.
-			 *
-			 * Only links representing the original posted 50 km/h roads are changed.
-			 * unchanged. Motorways and other faster roads are also
-			 * excluded.
+			 * The baseline free-flow speed range identifies links
+			 * representative of posted 50 km/h roads.
+			 * Other links are outside the baseline free-flow speed range.
 			 */
-			boolean representsPosted50Kmh =
+			boolean matchesBaselineFreeSpeed =
 				originalSpeedKmh >= ORIGINAL_FREESPEED_MIN_KMH
 					&& originalSpeedKmh <= ORIGINAL_FREESPEED_MAX_KMH;
 
 			if (!insidePolicyArea
 				|| !carAllowed
-				|| !representsPosted50Kmh) {
+				|| !matchesBaselineFreeSpeed) {
 				continue;
 			}
 
@@ -153,7 +145,7 @@ public final class DresdenModelSpeedLimitExtreme extends DresdenModel {
 			link.setFreespeed(policySpeed);
 
 			log.info(
-				"Extreme speed test link {}: {} km/h -> {} km/h; "
+				"3.5 km/h free-flow speed stress test, link {}: {} km/h -> {} km/h; "
 					+ "length = {} m",
 				link.getId(),
 				originalSpeedKmh,
@@ -178,11 +170,8 @@ public final class DresdenModelSpeedLimitExtreme extends DresdenModel {
 		}
 
 		log.info(
-			"Technical extreme-case test completed: changed posted speed from "
-				+ "{} km/h to {} km/h using factor {}. "
+			"3.5 km/h free-flow speed stress test completed using factor {}. "
 				+ "Modified links: {}. Total link length: {} km.",
-			BASE_POSTED_SPEED_KMH,
-			POLICY_POSTED_SPEED_KMH,
 			SPEED_REDUCTION_FACTOR,
 			modifiedLinks,
 			totalModifiedLengthMeters / 1000.0

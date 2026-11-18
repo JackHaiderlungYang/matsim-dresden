@@ -10,6 +10,10 @@ import org.matsim.pt.transitSchedule.api.TransitRoute;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * Logs schedule line IDs, route modes, route counts, departure counts and line attributes
+ * during scenario preparation. Use these IDs to identify lines in the loaded input schedule.
+ */
 public final class DresdenModelPtInspection extends DresdenModel {
 
 	private static final Logger log =

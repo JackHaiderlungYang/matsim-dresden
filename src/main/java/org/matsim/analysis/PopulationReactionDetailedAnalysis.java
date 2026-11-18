@@ -1,5 +1,7 @@
 package org.matsim.analysis;
 
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.population.Activity;
@@ -18,11 +20,18 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
+/**
+ * Compares selected plans by person ID and trip position across baseline and policy runs.
+ * The detailed CSV records the paired main modes and baseline purpose and beeline distance.
+ * Summary rows report matched trip counts and unique people by area or demographic group.
+ */
 public final class PopulationReactionDetailedAnalysis {
 
 	private static final double MIN_LAT = 51.049;
@@ -66,7 +75,7 @@ public final class PopulationReactionDetailedAnalysis {
 		POLICY_PLANS.put(
 			"speed30",
 			Path.of(
-				"output", "speed30-zone-500",
+				"output", "speed21-zone-500",
 				"dresden-v1.1-1pct.output_plans.xml.zst"
 			)
 		);
@@ -86,6 +95,14 @@ public final class PopulationReactionDetailedAnalysis {
 				"dresden-v1.1-1pct.output_plans.xml.zst"
 			)
 		);
+
+		POLICY_PLANS.put(
+			"pt_frequency_3_and_62",
+			Path.of(
+				"output", "pt-frequency-3-and-62-500",
+				"dresden-v1.1-1pct.output_plans.xml.zst"
+			)
+		);
 	}
 
 	private static final Path OUTPUT_CSV = Path.of(
@@ -98,12 +115,13 @@ public final class PopulationReactionDetailedAnalysis {
 
 	public static void main(String[] args) throws IOException {
 
+		Path detailedOutput = args.length == 0 ? OUTPUT_CSV : Path.of(args[0]).resolve(OUTPUT_CSV.getFileName());
 		Scenario baselineScenario = readPopulation(BASELINE_PLANS);
 
-		Files.createDirectories(OUTPUT_CSV.getParent());
+		Files.createDirectories(detailedOutput.toAbsolutePath().getParent());
 
 		try (BufferedWriter writer =
-				 Files.newBufferedWriter(OUTPUT_CSV)) {
+				 Files.newBufferedWriter(detailedOutput)) {
 
 			writer.write(
 				"person_id,age,sex,income_eur,group,policy,trip_index,purpose,"
@@ -127,10 +145,141 @@ public final class PopulationReactionDetailedAnalysis {
 			}
 		}
 
+		writeSummaries(detailedOutput);
+
 		System.out.println(
 			"Detailed population-reaction analysis written to: "
-				+ OUTPUT_CSV.toAbsolutePath()
+				+ detailedOutput.toAbsolutePath()
 		);
+	}
+
+
+	private static void writeSummaries(Path detailedOutput) throws IOException {
+		Map<DemographicGroup, DemographicStats> groups = new LinkedHashMap<>();
+		var format = CSVFormat.DEFAULT.builder().setHeader().setSkipHeaderRecord(true).build();
+		try (var reader = Files.newBufferedReader(detailedOutput);
+			 var records = format.parse(reader)) {
+			for (var row : records) {
+				String policy = row.get("policy");
+				String person = row.get("person_id");
+				String before = row.get("baseline_mode");
+				String after = row.get("policy_mode");
+				String age = demographicBand(row.get("age"), new int[]{18, 30, 45, 65},
+					"under_18", "18_29", "30_44", "45_64", "65_plus");
+				String income = demographicBand(row.get("income_eur"), new int[]{1500, 2500, 3500},
+					"under_1500", "1500_2499", "2500_3499", "3500_plus");
+				String sex = switch (row.get("sex")) {
+					case "f" -> "female";
+					case "m" -> "male";
+					default -> "other_or_unknown";
+				};
+				for (var group : List.of(new DemographicGroup(policy, "age", age),
+					new DemographicGroup(policy, "income", income),
+					new DemographicGroup(policy, "sex", sex),
+					new DemographicGroup(policy, "area", row.get("group")),
+					new DemographicGroup(policy, "area", "all"))) {
+					groups.computeIfAbsent(group, key -> new DemographicStats()).add(person, before, after);
+				}
+			}
+		}
+
+		writeSummary(detailedOutput.resolveSibling("population-reaction-sociodemographic-summary.csv"), groups, false);
+		writeSummary(detailedOutput.resolveSibling("population-reaction-person-summary.csv"), groups, true);
+	}
+
+	private static void writeSummary(Path summary, Map<DemographicGroup, DemographicStats> groups, boolean areaSummary)
+		throws IOException {
+		try (var writer = Files.newBufferedWriter(summary);
+			 var csv = new CSVPrinter(writer, CSVFormat.DEFAULT)) {
+			csv.printRecord("policy", "dimension", "category", "persons", "trips",
+				"mode_changed_trips", "mode_change_rate_pct", "baseline_car_trips",
+				"policy_car_trips", "car_trip_change", "car_trip_change_pct", "car_to_pt",
+				"car_to_bike", "car_to_walk", "mode_changed_persons", "person_mode_change_rate_pct",
+				"car_to_pt_persons", "pt_to_car_trips", "pt_to_car_persons");
+			for (var entry : groups.entrySet()) {
+				var group = entry.getKey();
+				if (areaSummary != "area".equals(group.dimension())) {
+					continue;
+				}
+				var stats = entry.getValue();
+				int carChange = stats.policyCar - stats.baselineCar;
+				csv.printRecord(group.policy(), group.dimension(), group.category(),
+					stats.persons.size(), stats.trips, stats.changed, percentage(stats.changed, stats.trips),
+					stats.baselineCar, stats.policyCar, carChange, percentage(carChange, stats.baselineCar),
+					stats.carToPt, stats.carToBike, stats.carToWalk,
+					stats.changedPersons.size(), percentage(stats.changedPersons.size(), stats.persons.size()),
+					stats.carToPtPersons.size(), stats.ptToCar, stats.ptToCarPersons.size());
+			}
+		}
+		System.out.println("Population reaction summary written to: " + summary.toAbsolutePath());
+	}
+
+	private static String demographicBand(String value, int[] limits, String... labels) {
+		double number;
+		try {
+			number = Double.parseDouble(value);
+		} catch (NumberFormatException e) {
+			return "unknown";
+		}
+		if (!Double.isFinite(number)) {
+			return "unknown";
+		}
+		for (int i = 0; i < limits.length; i++) {
+			if (number < limits[i]) {
+				return labels[i];
+			}
+		}
+		return labels[limits.length];
+	}
+
+	private static String percentage(int count, int total) {
+		return total == 0 ? "" : String.format(Locale.ROOT, "%.2f", 100.0 * count / total);
+	}
+
+	private record DemographicGroup(String policy, String dimension, String category) {
+	}
+
+	private static final class DemographicStats {
+		private final Set<String> persons = new HashSet<>();
+		private final Set<String> changedPersons = new HashSet<>();
+		private final Set<String> carToPtPersons = new HashSet<>();
+		private final Set<String> ptToCarPersons = new HashSet<>();
+		private int trips;
+		private int changed;
+		private int baselineCar;
+		private int policyCar;
+		private int carToPt;
+		private int ptToCar;
+		private int carToBike;
+		private int carToWalk;
+
+		private void add(String person, String before, String after) {
+			persons.add(person);
+			trips++;
+			if (!before.equals(after)) {
+				changed++;
+				changedPersons.add(person);
+			}
+			if ("car".equals(after)) {
+				policyCar++;
+				if ("pt".equals(before)) {
+					ptToCar++;
+					ptToCarPersons.add(person);
+				}
+			}
+			if ("car".equals(before)) {
+				baselineCar++;
+				switch (after) {
+					case "pt" -> {
+						carToPt++;
+						carToPtPersons.add(person);
+					}
+					case "bike" -> carToBike++;
+					case "walk" -> carToWalk++;
+					default -> { }
+				}
+			}
+		}
 	}
 
 	private static Scenario readPopulation(Path plansFile) {
@@ -198,6 +347,8 @@ public final class PopulationReactionDetailedAnalysis {
 			List<TripStructureUtils.Trip> policyTrips =
 				TripStructureUtils.getTrips(policyPlan);
 
+			// Pair by trip index; unmatched trailing trips are omitted. A changed activity
+			// sequence can pair trips with different destinations.
 			int comparableTrips =
 				Math.min(
 					baselineTrips.size(),

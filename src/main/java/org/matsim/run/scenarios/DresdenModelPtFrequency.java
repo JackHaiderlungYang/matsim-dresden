@@ -13,6 +13,11 @@ import org.matsim.vehicles.Vehicle;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Adds one departure five minutes after each eligible scheduled departure on tram line 3.
+ * Eligibility is based on the route departure time in the 06:00–09:00 and 15:00–18:00
+ * windows. The added departure uses the same route and its own vehicle of the original type.
+ */
 public final class DresdenModelPtFrequency extends DresdenModel {
 
 	private static final Logger log =

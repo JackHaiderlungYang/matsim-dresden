@@ -23,10 +23,15 @@ import java.util.Map;
 import org.matsim.core.utils.geometry.CoordinateTransformation;
 import org.matsim.core.utils.geometry.transformations.TransformationFactory;
 
+/**
+ * Summarises selected-plan trip counts and mode shares separately for each run.
+ * Each person is grouped using activities in that run; group membership can differ across runs.
+ * The speed30 output filename and scenario key are retained for existing consumers of the 21 km/h results.
+ */
 public final class SpeedLimitPopulationAnalysis {
 
 	/*
-	 * The 30 km/h and road-pricing scenarios use the same
+	 * The 21 km/h free-flow speed and road-pricing scenarios use the same
 	 * central Dresden policy area.
 	 */
 	private static final double MIN_LAT = 51.049;
@@ -68,9 +73,9 @@ public final class SpeedLimitPopulationAnalysis {
 		"dresden-v1.1-1pct.output_plans.xml.zst"
 	);
 
-	private static final Path SPEED30_PLANS = Path.of(
+	private static final Path SPEED21_PLANS = Path.of(
 		"output",
-		"speed30-zone-500",
+		"speed21-zone-500",
 		"dresden-v1.1-1pct.output_plans.xml.zst"
 	);
 
@@ -83,6 +88,11 @@ public final class SpeedLimitPopulationAnalysis {
 	private static final Path PT_FREQUENCY_PLANS = Path.of(
 		"output",
 		"pt-frequency-500",
+		"dresden-v1.1-1pct.output_plans.xml.zst"
+	);
+
+	private static final Path COMBINED_PT_FREQUENCY_PLANS = Path.of(
+		"output", "pt-frequency-3-and-62-500",
 		"dresden-v1.1-1pct.output_plans.xml.zst"
 	);
 
@@ -100,14 +110,17 @@ public final class SpeedLimitPopulationAnalysis {
 		Map<String, GroupStatistics> baseline =
 			analyseScenario(BASELINE_PLANS);
 
-		Map<String, GroupStatistics> speed30 =
-			analyseScenario(SPEED30_PLANS);
+		Map<String, GroupStatistics> speed21 =
+			analyseScenario(SPEED21_PLANS);
 
 		Map<String, GroupStatistics> roadPricing =
 			analyseScenario(ROAD_PRICING_PLANS);
 
 		Map<String, GroupStatistics> ptFrequency =
 			analyseScenario(PT_FREQUENCY_PLANS);
+
+		Map<String, GroupStatistics> combinedPtFrequency =
+			analyseScenario(COMBINED_PT_FREQUENCY_PLANS);
 
 		Files.createDirectories(OUTPUT_CSV.getParent());
 
@@ -121,9 +134,10 @@ public final class SpeedLimitPopulationAnalysis {
 			writer.newLine();
 
 			writeScenario(writer, "baseline", baseline);
-			writeScenario(writer, "speed30", speed30);
+			writeScenario(writer, "speed30", speed21);
 			writeScenario(writer, "roadpricing", roadPricing);
 			writeScenario(writer, "pt_frequency", ptFrequency);
+			writeScenario(writer, "pt_frequency_3_and_62", combinedPtFrequency);
 		}
 
 		System.out.println(

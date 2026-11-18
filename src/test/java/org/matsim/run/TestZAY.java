@@ -18,6 +18,9 @@ import java.io.File;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+/**
+ * Disabled regression test for a one-iteration Dresden 1% run against saved plan scores and events.
+ */
 @Disabled
 public class TestZAY {
 	@RegisterExtension
@@ -29,8 +32,8 @@ public class TestZAY {
 		DresdenModel.main(new String[]{
 			"--config", "input/" + DresdenModel.VERSION + "/dresden-" + DresdenModel.VERSION + "-1pct.config.xml",
 			"--iterations", "1",
-			"--output", utils.getOutputDirectory(),//记录output路径
-			"--config:controller.overwriteFiles=deleteDirectoryIfExists",//刷新output
+			"--output", utils.getOutputDirectory(), // Write this run to the test output directory.
+			"--config:controller.overwriteFiles=deleteDirectoryIfExists", // Replace a prior test run in that directory.
 			"--config:global.numberOfThreads", "2",
 			"--config:qsim.numberOfThreads", "2",
 			"--config:simwrapper.defaultDashboards", "disabled",

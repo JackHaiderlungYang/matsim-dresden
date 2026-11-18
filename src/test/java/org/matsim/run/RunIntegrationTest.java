@@ -105,7 +105,7 @@ class RunIntegrationTest {
 		Config config = ConfigUtils.loadConfig(String.format("input/%s/dresden-%s-10pct.config.xml", DresdenModel.VERSION, DresdenModel.VERSION));
 		ConfigUtils.addOrGetModule(config, SimWrapperConfigGroup.class).setDefaultDashboards( DefaultDashboardsMode.disabled );
 
-		// start with wrong plans file
+		// Verify that an invalid plans file causes the run to fail.
 		Assertions.assertThrows(UncheckedIOException.class, () -> MATSimApplication.execute(DresdenModel.class, config,
 			"--1pct",
 			"--iterations", "1",
@@ -142,7 +142,7 @@ class RunIntegrationTest {
 	void runScenario_main_fails() {
 		String configPath = String.format("input/%s/dresden-%s-10pct.config.xml", DresdenModel.VERSION, DresdenModel.VERSION);
 
-		// start with wrong plans file
+		// Verify that an invalid plans file causes the run to fail.
 		Assertions.assertThrows(UncheckedIOException.class, () ->
 			DresdenModel.main(new String[]{"--config", configPath,
 				"--1pct",

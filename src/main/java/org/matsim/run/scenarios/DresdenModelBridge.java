@@ -10,6 +10,10 @@ import org.matsim.core.controler.Controler;
 
 import java.util.Set;
 
+/**
+ * Runs an earlier bridge-closure experiment by setting both capacity and free-flow speed
+ * near zero on a list of directed links. Links remain in the network.
+ */
 public final class DresdenModelBridge extends DresdenModel {
 	// "final": for the time being, please try to avoid inheritance from inheritance.  kai, dec'25
 
@@ -23,12 +27,12 @@ public final class DresdenModelBridge extends DresdenModel {
 				"--1pct",
 				"--iterations", "10",
 				"--output", "./output/bridge_more4/",
-				"--config:controller.overwriteFiles=deleteDirectoryIfExists",// Refresh the output
+				// Replace the previous run in this output directory when using the default arguments.
+				"--config:controller.overwriteFiles=deleteDirectoryIfExists",
 				"--config:global.numberOfThreads", "2",
 				"--config:qsim.numberOfThreads", "2",
 				"--config:simwrapper.defaultDashboards", "disabled",
 				"--emissions", "DISABLED"};
-			// Compare the test output with the expected output
 			// yy If we collaborate on code, could you please do comments in english?  Thanks.  kai, dec'25
 		}
 

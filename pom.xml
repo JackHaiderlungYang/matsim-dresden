@@ -76,6 +76,7 @@
 		</dependency>
 
 		<!-- Custom dependencies -->
+		<!-- Provides the MATSim area-toll scheme and controller module. -->
 		<dependency>
 			<groupId>org.matsim.contrib</groupId>
 			<artifactId>roadpricing</artifactId>

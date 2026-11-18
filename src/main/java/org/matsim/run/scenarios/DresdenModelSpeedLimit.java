@@ -10,29 +10,24 @@ import org.matsim.application.MATSimApplication;
 import org.matsim.core.utils.geometry.CoordinateTransformation;
 import org.matsim.core.utils.geometry.transformations.TransformationFactory;
 
+/**
+ * Reduces free-flow speed to approximately 21 km/h on car-accessible links with a baseline
+ * free-flow speed of 34–36 km/h and a midpoint inside the central Dresden policy area.
+ */
 public final class DresdenModelSpeedLimit extends DresdenModel {
 
 	private static final Logger log =
 		LogManager.getLogger(DresdenModelSpeedLimit.class);
 
 	/*
-	 * Policy definition:
-	 * Existing posted speed limit: 50 km/h
-	 * New posted speed limit:      30 km/h
-	 *
-	 * The MATSim network represents a posted speed of 50 km/h
-	 * with a freespeed of approximately 35 km/h.
-	 * Therefore, the original MATSim freespeed is multiplied by:
-	 *
-	 * 30 / 50 = 0.6
+	 * Scale selected links from approximately 35 to 21 km/h free-flow speed.
+	 * The baseline free-flow speed is characteristic of posted 50 km/h roads
+	 * in the Dresden network. The scenario updates link freespeed only.
 	 */
-	private static final double BASE_POSTED_SPEED_KMH = 50.0;
-	private static final double POLICY_POSTED_SPEED_KMH = 30.0;
-	private static final double SPEED_REDUCTION_FACTOR =
-		POLICY_POSTED_SPEED_KMH / BASE_POSTED_SPEED_KMH;
+	private static final double SPEED_REDUCTION_FACTOR = 0.6;
 
 	/*
-	 * Candidate 30 km/h zone in central Dresden.
+	 * Free-flow speed reduction area in central Dresden.
 	 *
 	 * Approximate boundaries:
 	 * West:  Könneritzstraße and the railway corridor
@@ -126,36 +121,27 @@ public final class DresdenModelSpeedLimit extends DresdenModel {
 			double originalSpeedKmh = originalSpeed * 3.6;
 
 			/*
-			 * Select only links representing roads with an original
-			 * posted speed limit of approximately 50 km/h.
-			 *
-			 * Roads already corresponding to 30 km/h or below remain
-			 * unchanged. Motorways and other faster roads are also
-			 * excluded.
+			 * The baseline free-flow speed range identifies links
+			 * representative of posted 50 km/h roads.
+			 * Other links are outside the baseline free-flow speed range.
 			 */
-			boolean representsPosted50Kmh =
+			boolean matchesBaselineFreeSpeed =
 				originalSpeedKmh >= ORIGINAL_FREESPEED_MIN_KMH
 					&& originalSpeedKmh <= ORIGINAL_FREESPEED_MAX_KMH;
 
 			if (!insidePolicyArea
 				|| !carAllowed
-				|| !representsPosted50Kmh) {
+				|| !matchesBaselineFreeSpeed) {
 				continue;
 			}
 
-			/*
-			 * Apply the relative change from posted 50 km/h
-			 * to posted 30 km/h:
-			 *
-			 * new MATSim freespeed = original freespeed * 0.6
-			 */
 			double policySpeed =
 				originalSpeed * SPEED_REDUCTION_FACTOR;
 
 			link.setFreespeed(policySpeed);
 
 			log.info(
-				"30 km/h zone link {}: {} km/h -> {} km/h; "
+				"21 km/h free-flow speed scenario, link {}: {} km/h -> {} km/h; "
 					+ "length = {} m",
 				link.getId(),
 				originalSpeedKmh,
@@ -174,17 +160,14 @@ public final class DresdenModelSpeedLimit extends DresdenModel {
 		 */
 		if (modifiedLinks == 0) {
 			throw new IllegalStateException(
-				"No links were selected for the 30 km/h zone. "
+				"No links were selected for the 21 km/h free-flow speed scenario. "
 					+ "Check the coordinates and network CRS."
 			);
 		}
 
 		log.info(
-			"30 km/h zone completed: changed posted speed from "
-				+ "{} km/h to {} km/h using factor {}. "
+			"21 km/h free-flow speed scenario completed using factor {}. "
 				+ "Modified links: {}. Total link length: {} km.",
-			BASE_POSTED_SPEED_KMH,
-			POLICY_POSTED_SPEED_KMH,
 			SPEED_REDUCTION_FACTOR,
 			modifiedLinks,
 			totalModifiedLengthMeters / 1000.0

@@ -15,6 +15,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * Stress-tests frequency on tram line 3 by attempting departures one to four minutes
+ * after each original peak departure. Candidates must lie within the same peak window,
+ * and occupied departure times are skipped separately for each transit route.
+ * Each accepted departure is assigned a separate vehicle of the original type.
+ */
 public final class DresdenModelPtFrequencyExtreme extends DresdenModel {
 
 	private static final Logger log =

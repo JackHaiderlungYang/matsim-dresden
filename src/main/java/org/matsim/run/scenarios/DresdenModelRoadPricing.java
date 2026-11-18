@@ -21,14 +21,14 @@ public final class DresdenModelRoadPricing extends DresdenModel {
 		LogManager.getLogger(DresdenModelRoadPricing.class);
 
 	/*
-	 * Preliminary road-pricing policy:
-	 * Cars entering the selected central Dresden area pay EUR 5.
-	 * Public transport, cycling and walking are not charged.
+	 * Preliminary road-pricing scenario. MATSim area pricing charges each driver
+	 * at most once per iteration, when the driver first enters a tolled link
+	 * during the charging period. Starting on a tolled link also counts.
 	 */
 	private static final double TOLL_EUR = 5.0;
 
 	/*
-	 * Use the same geographical area as the 30 km/h policy
+	 * Use the same geographical area as the 21 km/h free-flow speed scenario
 	 * to make both policy scenarios directly comparable.
 	 */
 	private static final double MIN_LAT = 51.049;
@@ -78,12 +78,13 @@ public final class DresdenModelRoadPricing extends DresdenModel {
 
 		RoadPricingUtils.setDescription(
 			scheme,
-			"EUR 5 area toll for car traffic in central Dresden"
+			"Central Dresden area toll of EUR " + TOLL_EUR
+				+ " per driver per iteration, charged on first use of a tolled link"
 		);
 
 		/*
 		 * The toll is active from 00:00 until 30:00.
-		 * The extended end time also covers trips ending after midnight.
+		 * The charging period extends to 06:00 on the following day.
 		 */
 		RoadPricingUtils.createAndAddGeneralCost(
 			scheme,
@@ -95,6 +96,7 @@ public final class DresdenModelRoadPricing extends DresdenModel {
 		int tolledLinks = 0;
 		double totalLengthMeters = 0.0;
 
+		// Select car-accessible links whose midpoint falls inside the policy area.
 		for (Link link : scenario.getNetwork().getLinks().values()) {
 
 			double centreX =
@@ -131,7 +133,7 @@ public final class DresdenModelRoadPricing extends DresdenModel {
 		}
 
 		log.info(
-			"Road-pricing area completed: toll = {} EUR, "
+			"Road-pricing area configured: toll = {} EUR per driver per iteration, "
 				+ "tolled links = {}, total link length = {} km.",
 			TOLL_EUR,
 			tolledLinks,
